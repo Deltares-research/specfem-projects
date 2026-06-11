@@ -1,17 +1,26 @@
-# specfem-examples
+# specfem-projects
 Spectral element acoustic-elastic simulations used in Deltares projects
 
-## Installation of SPECFEM2D
+## Installation of SPECFEM2D in Linux
 
-   Navigate to folder where you would like to clone and install specfem2d (in my case gitclones folder) and clone:
+   This installation uses pixi as its environment manager, pixi can be installed via:
+
+   ```
+   curl -fsSL https://pixi.sh/install.sh | sh
+   ```
+
+   Now navigate to folder where you would like to clone this project repository and also where you want to clone and install specfem2d (here 'gitclones'):
 
    ```
    cd ~/gitclones
+   git clone https://github.com/Deltares-research/specfem-projects
    git clone https://github.com/SPECFEM/specfem2d.git
    ```
    
-   Now copy the pixi.toml in the SPECFEM2D folder run (don't run in specfem-examples, this is just a repository of projects):
+   Now copy the pyproject.toml in the projects repo to the specfem2d repo and run it there (don't run in specfem-projects, this is just a repository of projects):
    ```
+   cp ~/gitclones/specfem-projects/pyproject.toml ~/gitclones/specfem2d/pyproject.toml
+   cd ~/gitclones/specfem2d
    pixi run install
    exec bash
    ```
@@ -21,23 +30,23 @@ Spectral element acoustic-elastic simulations used in Deltares projects
    ```
 
 ## Generate MESH files
-Now return to your project folder (e.g. the template example) kaas
 
-    ```
-    cd ~gitclones/specfem-examples/Template_Gmsh_MPI
+Now return to your projects and select your project folder (or the template as below that has an example in it)
+	
+    
+    cd ~gitclones/specfem-projects/Template_Gmsh_MPI
     ./process_the_Gmsh_file_once_and_for_all.sh
-    ```
+
 
 ## Run Simulation
 
 You can run the simulation by:
 
-    run_this_project.sh
+    ./run_this_project.sh
 
-## Remove the generated mesh and OUTPUT_FILES, type:
-	```
+## Remove the generated mesh and OUTPUT_FILES
+
 	./clear_run.sh
-    ```
 
 ## Start your own project
 You can use the Template_Gmsh_MPI to setup your own project, for this you need to update the following files
