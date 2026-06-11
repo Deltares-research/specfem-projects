@@ -1,5 +1,5 @@
 [project]
-name = "specfem2d"
+name = "specfem-projects"
 version = "0.1.0"
 description = "SPECFEM2D-pixi"
 authors = [{name = "Roeland Nieboer", email = "roeland.nieboer@deltares.nl"}]
