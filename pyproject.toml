@@ -1,14 +1,10 @@
 [project]
-name = "specfem2d"
+name = "specfem-projects"
 version = "0.1.0"
 description = "SPECFEM2D-pixi"
 authors = [{name = "Roeland Nieboer", email = "roeland.nieboer@deltares.nl"}]
 requires-python = ">= 3.11"
 dependencies = []
-
-[build-system]
-build-backend = "hatchling.build"
-requires = ["hatchling"]
 
 [tool.pixi.workspace]
 channels = ["gimli", "conda-forge"]
@@ -18,20 +14,34 @@ platforms = ["linux-64", "win-64"]
 gmsh = ">=4.12.2,<4.13"
 pygimli = ">=1.5.0,<1.6"
 make = ">=4.3,<5"
+zlib = ">=1.3.1,<2"
 
-[tool.pixi.pypi-dependencies]
-specfem_projects = { path = ".", editable = true }
+[tool.pixi.target.linux-64.dependencies]
+gcc_linux-64 = ">=12,<13"
+gfortran_linux-64 = ">=12,<13"
+mpich = ">=4.1.1,<5"
 
 [tool.pixi.tasks]
 # setting environment variables add to bash config file and path
-specfem_root = """grep -q '^export SPECFEM2D_ROOT=' "$HOME/.bashrc" && sed -i "/^export SPECFEM2D_ROOT=/c\\export SPECFEM2D_ROOT=$(pwd)" "$HOME/.bashrc" || echo 'export SPECFEM2D_ROOT='$(pwd) >> "$HOME/.bashrc""""
-add_to_path = """echo 'if [[ ":$PATH:" != *":$SPECFEM2D_ROOT:"* ]]; then export PATH="$SPECFEM2D_ROOT:$PATH"; fi' >> "$HOME/.bashrc""""
+specfem_root = '''grep -q "^export SPECFEM2D_ROOT=" "$HOME/.bashrc" && sed -i "s|^export SPECFEM2D_ROOT=.*$|export SPECFEM2D_ROOT=$(pwd)|" "$HOME/.bashrc" || echo "export SPECFEM2D_ROOT=$(pwd)" >> "$HOME/.bashrc"'''
+add_to_path = '''grep -q "SPECFEM2D_ROOT:\$PATH" "$HOME/.bashrc" || echo "if [[ \":\$PATH:\" != *\":\$SPECFEM2D_ROOT:\"* ]]; then export PATH=\"\$SPECFEM2D_ROOT:\$PATH\"; fi" >> "$HOME/.bashrc"'''
 knots = """source $HOME/.bashrc"""
 envs = { depends-on = ["specfem_root", "add_to_path"]}
 
+# cluster-only: persist required module loads and compiler wrappers in .bashrc
+cluster_module_intelmpi = """grep -q '^module load intelmpi$' "$HOME/.bashrc" || echo 'module load intelmpi' >> "$HOME/.bashrc"""
+cluster_module_mpich = """grep -q '^module load mpich/4.1.1_gcc12.2.0$' "$HOME/.bashrc" || echo 'module load mpich/4.1.1_gcc12.2.0' >> "$HOME/.bashrc"""
+cluster_fc = """grep -q '^export FC=' "$HOME/.bashrc" && sed -i '/^export FC=/c\\export FC=gfortran' "$HOME/.bashrc" || echo 'export FC=gfortran' >> "$HOME/.bashrc"""
+cluster_cc = """grep -q '^export CC=' "$HOME/.bashrc" && sed -i '/^export CC=/c\\export CC=gcc' "$HOME/.bashrc" || echo 'export CC=gcc' >> "$HOME/.bashrc"""
+cluster_mpifc = """grep -q '^export MPIFC=' "$HOME/.bashrc" && sed -i '/^export MPIFC=/c\\export MPIFC=mpifort' "$HOME/.bashrc" || echo 'export MPIFC=mpifort' >> "$HOME/.bashrc"""
+cluster_envs = { depends-on = ["cluster_module_intelmpi", "cluster_module_mpich", "cluster_fc", "cluster_cc", "cluster_mpifc", "knots"]}
+
 # configure and install
-configure = { cmd = "./configure FC=gfortran CC=gcc MPIFC=mpif90 --with-mpi=yes", depends-on = "envs" }
-install = { cmd = "make -j 4", depends-on = "configure"}
+configure_local = { cmd = "./configure FC=x86_64-conda-linux-gnu-gfortran CC=x86_64-conda-linux-gnu-gcc MPIFC=mpifort --with-mpi=yes", depends-on = "envs" }
+configure_cluster = { cmd = "./configure FC=gfortran CC=gcc MPIFC=mpifort --with-mpi=yes", depends-on = ["envs", "cluster_envs"] }
+build = "make -j 4"
+install = { depends-on = ["configure_local", "build"] }
+install-cluster = { depends-on = ["configure_cluster", "build"] }
 
 # check installation by running the example
 example = "./run_this_example.sh"
