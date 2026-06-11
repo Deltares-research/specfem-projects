@@ -24,4 +24,6 @@ __pycache__/
 *.code-workspace
 
 # pixi environments
-.pixi
+.pixi# pixi environments
+.pixi/*
+!.pixi/config.toml
